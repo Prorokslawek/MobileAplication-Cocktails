@@ -35,11 +35,11 @@ fun ProportionalImage(
         AsyncImage(
             model = imageUrl,
             contentDescription = contentDescription,
-            contentScale = ContentScale.Fit, // Kluczowe - zachowuje proporcje
+            contentScale = ContentScale.Crop, // Zmiana z Fit na Crop
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 350.dp) // Maksymalna wysokość dla tabletów
-                .aspectRatio(4/3f, matchHeightConstraintsFirst = false) // Opcjonalne - zachowa proporcje 4:3
+                .heightIn(max = 250.dp) // Zmniejszona maksymalna wysokość
+                .aspectRatio(16/9f) // Stały aspect ratio dla wszystkich obrazów
         )
     }
 }

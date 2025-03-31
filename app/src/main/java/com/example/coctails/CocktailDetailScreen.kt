@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,49 +23,100 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.coctails.components.ProportionalImage
-import com.example.coctails.data.SampleData
 import com.example.coctails.model.Cocktail
 import com.example.coctails.utils.WindowWidthSizeClass
 import com.example.coctails.utils.calculateWindowSizeClass
 import com.example.coctails.components.TimerFragment
 import com.example.coctails.viewmodel.TimerViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.coctails.viewmodel.CocktailDetailViewModel
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.FloatingActionButton
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CocktailDetailScreen(cocktailId: String, onNavigateBack: () -> Unit,timerViewModel: TimerViewModel) {
-    val cocktail = SampleData.cocktails.find { it.id == cocktailId }
+fun CocktailDetailScreen(cocktailId: String, onNavigateBack: () -> Unit, timerViewModel: TimerViewModel) {
+    val viewModel: CocktailDetailViewModel = viewModel()
+    val cocktailState by viewModel.cocktail.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val windowSizeClass = calculateWindowSizeClass()
+    val context = LocalContext.current
 
-    cocktail?.let {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(it.name) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            // Różne layouty dla różnych rozmiarów ekranu
-            when (windowSizeClass.widthSizeClass) {
-                WindowWidthSizeClass.Compact -> {
-                    // Telefon - layout pionowy
-                    CompactCocktailDetail(cocktail, Modifier.padding(paddingValues))
-                }
-                else -> {
-                    // Tablet - layout poziomy z ograniczoną szerokością obrazu
-                    MediumLargeCocktailDetail(cocktail, Modifier.padding(paddingValues))
-                }
-            }
+    LaunchedEffect(cocktailId) {
+        viewModel.loadCocktailDetails(cocktailId)
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
-    } ?: Text("Nie znaleziono koktajlu")
+    } else {
+        cocktailState?.let { cocktail ->
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(cocktail.name) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
+                            }
+                        }
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = {
+                            // Przygotuj treść SMS-a
+                            val smsBody = buildString {
+                                append("Składniki do koktajlu ${cocktail.name}:\n\n")
+                                cocktail.ingredients.forEach { ingredient ->
+                                    append("• $ingredient\n")
+                                }
+                            }
+
+                            // Utwórz intent do wysłania SMS-a
+                            val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse("smsto:")
+                                putExtra("sms_body", smsBody)
+                            }
+
+                            // Uruchom aktywność wysyłania SMS-a
+                            context.startActivity(smsIntent)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Wyślij składniki SMS-em"
+                        )
+                    }
+                }
+            ) { paddingValues ->
+                when (windowSizeClass.widthSizeClass) {
+                    WindowWidthSizeClass.Compact -> {
+                        CompactCocktailDetail(cocktail, Modifier.padding(paddingValues))
+                    }
+                    else -> {
+                        MediumLargeCocktailDetail(cocktail, Modifier.padding(paddingValues))
+                    }
+                }
+            }
+        } ?: Text("Nie znaleziono koktajlu")
+    }
 }
+
+
 
 @Composable
 fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
@@ -89,7 +141,7 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Składniki
+        // SkĹadniki
         Text(
             text = "Ingredients:",
             style = MaterialTheme.typography.titleLarge
@@ -130,6 +182,8 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
         TimerFragment(
             modifier = Modifier.fillMaxWidth()
+                .fillMaxWidth()
+                .padding(horizontal = 0.dp)
         )
 
     }
@@ -143,7 +197,7 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Obraz z lewej strony, ograniczony do 40% szerokości
+        // Obraz z lewej strony, ograniczony do 40% szerokoĹci
         Box(modifier = Modifier.weight(0.4f)) {
             ProportionalImage(
                 imageUrl = cocktail.imageUrl,
@@ -154,7 +208,7 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Szczegóły z prawej strony
+        // SzczegĂłĹy z prawej strony
         Column(
             modifier = Modifier
                 .weight(0.6f)
@@ -167,7 +221,7 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Składniki
+            // SkĹadniki
             Text(
                 text = "Ingredients:",
                 style = MaterialTheme.typography.titleLarge
@@ -208,6 +262,8 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
 
             TimerFragment(
                 modifier = Modifier.fillMaxWidth()
+                    .fillMaxWidth()
+                    .padding(horizontal = 0.dp)
             )
 
         }

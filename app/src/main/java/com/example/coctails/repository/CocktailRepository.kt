@@ -47,4 +47,30 @@ class CocktailRepository {
             return@withContext null
         }
     }
+    //Pobierz koktalje bezalkoholowe
+    suspend fun getNonAlcoholicCocktails(): List<Cocktail> {
+        val response = CocktailApi.service.filterByAlcoholic("Non_Alcoholic")
+        // Zwróć podstawowe informacje o drinkach
+        return response.drinks?.map {
+            Cocktail(
+                id = it.idDrink ?: "",
+                name = it.strDrink ?: "",
+                imageUrl = it.strDrinkThumb ?: "",
+                ingredients = emptyList(), // Te dane będą pobrane później
+                instructions = "" // Te dane będą pobrane później
+            )
+        } ?: emptyList()
+    }
+
+    // Dodaj metodę do pobierania szczegółów drinka po ID
+    suspend fun getCocktailDetails(id: String): Cocktail? {
+        try {
+            val response = CocktailApi.service.lookupCocktail(id)
+            return response.drinks?.firstOrNull()?.toCocktail()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
 }

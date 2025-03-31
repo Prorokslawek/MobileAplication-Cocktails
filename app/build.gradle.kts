@@ -71,6 +71,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
 
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
+
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
+    // Navigation Drawer
+    implementation("androidx.compose.material3:material3:1.1.1")
+
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
