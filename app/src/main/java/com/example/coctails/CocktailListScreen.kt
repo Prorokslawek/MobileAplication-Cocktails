@@ -84,7 +84,7 @@ fun CocktailListScreen(viewModel: CocktailViewModel = viewModel(), onCocktailCli
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lista koktajli") },
+                title = { Text("Coctail List") },
                 actions = {
                     IconButton(onClick = { viewModel.refreshCocktails() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Odśwież")

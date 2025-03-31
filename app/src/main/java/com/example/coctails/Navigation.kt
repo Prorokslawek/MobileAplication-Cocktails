@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-
+import com.example.coctails.viewmodel.TimerViewModel
 
 sealed class Screen(val route: String) {
     object CocktailList : Screen("cocktailList")
@@ -16,7 +16,7 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun CocktailNavHost() {
+fun CocktailNavHost(timerViewModel: TimerViewModel) {
     val navController = rememberNavController()
 
     NavHost(
@@ -38,7 +38,8 @@ fun CocktailNavHost() {
             val cocktailId = backStackEntry.arguments?.getString("cocktailId") ?: ""
             CocktailDetailScreen(
                 cocktailId = cocktailId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                timerViewModel = timerViewModel
             )
         }
     }
