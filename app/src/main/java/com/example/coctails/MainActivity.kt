@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.example.coctails.ui.theme.CoctailsTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +24,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
+            val timerViewModel: TimerViewModel = viewModel()
+            val scope = rememberCoroutineScope()
 
             CoctailsTheme(
                 darkTheme = isDarkTheme
@@ -31,11 +34,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Utworzenie instancji TimerViewModel na poziomie aktywności
-                    val timerViewModel: TimerViewModel = viewModel()
-
-                    // Przekazanie TimerViewModel i ThemeViewModel do CocktailNavHost
-                    CocktailNavHost(
+                    AppNavigation(
                         timerViewModel = timerViewModel,
                         themeViewModel = themeViewModel
                     )

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -35,14 +36,34 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.collectAsState
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
 
-
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun CocktailListScreen(onCocktailClick: (String) -> Unit, themeViewModel: ThemeViewModel) {
-    val viewModel: CocktailListViewModel = viewModel()
+fun CocktailListScreen(
+    onCocktailClick: (String) -> Unit,
+    themeViewModel: ThemeViewModel,
+    cocktailListViewModel: CocktailListViewModel = viewModel() // Domyślnie tworzy nowy, ale można przekazać istniejący
+) {
     val tabs = listOf("Główna", "Drinki Alkoholowe", "Drinki Bezalkoholowe")
-    val selectedTabIndex by viewModel.selectedTabIndex.collectAsStateWithLifecycle()
+    val selectedTabIndex by cocktailListViewModel.selectedTabIndex.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // Synchronizacja pagerState z viewModel
+    LaunchedEffect(pagerState.currentPage) {
+        cocktailListViewModel.setSelectedTabIndex(pagerState.currentPage)
+    }
+
+    // Synchronizacja viewModel z pagerState
+    LaunchedEffect(selectedTabIndex) {
+        if (pagerState.currentPage != selectedTabIndex) {
+            pagerState.animateScrollToPage(selectedTabIndex)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -53,7 +74,11 @@ fun CocktailListScreen(onCocktailClick: (String) -> Unit, themeViewModel: ThemeV
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTabIndex == index,
-                        onClick = { viewModel.setSelectedTabIndex(index) },
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
                         text = { Text(title) }
                     )
                 }
@@ -73,10 +98,16 @@ fun CocktailListScreen(onCocktailClick: (String) -> Unit, themeViewModel: ThemeV
             }
 
             Box(modifier = contentModifier) {
-                when (selectedTabIndex) {
-                    0 -> MainTabContent(themeViewModel)
-                    1 -> AlcoholicDrinksTabContent(onCocktailClick)
-                    2 -> NonAlcoholicDrinksTabContent(onCocktailClick)
+                HorizontalPager(
+                    count = tabs.size,
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        0 -> MainTabContent(themeViewModel)
+                        1 -> AlcoholicDrinksTabContent(onCocktailClick)
+                        2 -> NonAlcoholicDrinksTabContent(onCocktailClick)
+                    }
                 }
             }
         }
@@ -197,7 +228,7 @@ fun CocktailCard(cocktail: Cocktail, onCocktailClick: (String) -> Unit) {
             ProportionalImage(
                 imageUrl = cocktail.imageUrl,
                 contentDescription = cocktail.name,
-                        modifier = Modifier.height(180.dp)
+                modifier = Modifier.height(180.dp)
             )
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(text = cocktail.name, style = MaterialTheme.typography.titleMedium)
