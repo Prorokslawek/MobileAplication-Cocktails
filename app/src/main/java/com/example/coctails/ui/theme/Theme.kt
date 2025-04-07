@@ -29,7 +29,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun CoctailsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    // Android 12+ wymagany
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {

@@ -97,7 +97,7 @@ fun TimerFragment(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Minutnik",
+                    text = "Timer",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -131,7 +131,7 @@ fun TimerFragment(
                 // Ustawienia czasu
                 Column {
                     Text(
-                        text = "Minuty: $minutesInput",
+                        text = "Minutes: $minutesInput",
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -146,7 +146,7 @@ fun TimerFragment(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Sekundy: $secondsInput",
+                        text = "Seconds: $secondsInput",
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -167,7 +167,7 @@ fun TimerFragment(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Ustaw czas")
+                        Text("Set time")
                     }
                 }
             } else {

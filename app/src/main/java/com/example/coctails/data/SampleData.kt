@@ -1,3 +1,4 @@
+//Pobieranie danych z Api/ zapasowe koktajle
 package com.example.coctails.data
 
 import com.example.coctails.model.Cocktail

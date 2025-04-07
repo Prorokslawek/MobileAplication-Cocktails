@@ -11,11 +11,6 @@ interface CocktailApiService {
     @GET("api/json/v1/1/search.php")
     suspend fun searchCocktails(@Query("s") searchQuery: String): CocktailApiResponse
 
-    @GET("api/json/v1/1/random.php")
-    suspend fun getRandomCocktail(): CocktailApiResponse
-
-    @GET("api/json/v1/1/filter.php")
-    suspend fun filterByIngredient(@Query("i") ingredient: String): CocktailApiResponse
 
     @GET("api/json/v1/1/filter.php")
     suspend fun filterByAlcoholic(@Query("a") alcoholic: String): CocktailApiResponse

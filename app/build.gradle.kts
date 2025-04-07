@@ -82,6 +82,8 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
 
+    //Splash screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

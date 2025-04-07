@@ -1,3 +1,6 @@
+//Pobieranie danych o koktajlach z API.
+//Konwersję surowych danych JSON na czytelne obiekty Kotlin używane w interfejsie użytkownika.
+
 package com.example.coctails.model
 
 

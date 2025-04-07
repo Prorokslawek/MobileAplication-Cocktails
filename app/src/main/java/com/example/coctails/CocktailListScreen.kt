@@ -1,5 +1,6 @@
 package com.example.coctails.viewmodel
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +22,9 @@ import com.example.coctails.model.Cocktail
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -36,21 +39,24 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.platform.LocalConfiguration
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.PagerDefaults
 import com.google.accompanist.pager.rememberPagerState
+import dev.chrisbanes.snapper.ExperimentalSnapperApi
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalSnapperApi::class)
 @Composable
 fun CocktailListScreen(
     onCocktailClick: (String) -> Unit,
     themeViewModel: ThemeViewModel,
     cocktailListViewModel: CocktailListViewModel = viewModel() // Domyślnie tworzy nowy, ale można przekazać istniejący
 ) {
-    val tabs = listOf("Główna", "Drinki Alkoholowe", "Drinki Bezalkoholowe")
+    val tabs = listOf("Main", "Alcoholic drinks", "Non-alcoholic drinks")
     val selectedTabIndex by cocktailListViewModel.selectedTabIndex.collectAsStateWithLifecycle()
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(initialPage = selectedTabIndex)
     val coroutineScope = rememberCoroutineScope()
 
     // Synchronizacja pagerState z viewModel
@@ -64,6 +70,7 @@ fun CocktailListScreen(
             pagerState.animateScrollToPage(selectedTabIndex)
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -101,7 +108,10 @@ fun CocktailListScreen(
                 HorizontalPager(
                     count = tabs.size,
                     state = pagerState,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    // lepszej kontroli przesuwania
+                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
+                    userScrollEnabled = true
                 ) { page ->
                     when (page) {
                         0 -> MainTabContent(themeViewModel)
@@ -118,16 +128,20 @@ fun CocktailListScreen(
 @Composable
 fun MainTabContent(themeViewModel: ThemeViewModel) {
     val isDarkTheme by themeViewModel.isDarkTheme.collectAsStateWithLifecycle()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()), // Dodaj możliwość przewijania
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = if (isLandscape) Arrangement.SpaceEvenly else Arrangement.Center
     ) {
+        // Zawartość główna
         Text(
-            text = "Witaj w aplikacji Coctails!",
+            text = "Witaj w aplikacji Cocktails!",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -138,19 +152,29 @@ fun MainTabContent(themeViewModel: ThemeViewModel) {
             textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // W trybie poziomym zmniejszamy lub usuwamy odstępy
+        if (!isLandscape) {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
+        // W trybie poziomym zmniejszamy rozmiar obrazu
         Image(
             painter = painterResource(id = R.drawable.cocktail_logo),
             contentDescription = "Cocktail Logo",
             modifier = Modifier
-                .size(200.dp)
-                .padding(16.dp),
+                .size(if (isLandscape) 120.dp else 200.dp)
+                .padding(if (isLandscape) 8.dp else 16.dp),
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // W trybie poziomym zmniejszamy lub usuwamy odstępy
+        if (!isLandscape) {
+            Spacer(modifier = Modifier.height(24.dp))
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
+        // Przycisk zmiany motywu - zawsze widoczny
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -217,6 +241,9 @@ fun AlcoholicDrinksTabContent(onCocktailClick: (String) -> Unit) {
 
 @Composable
 fun CocktailCard(cocktail: Cocktail, onCocktailClick: (String) -> Unit) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,15 +251,41 @@ fun CocktailCard(cocktail: Cocktail, onCocktailClick: (String) -> Unit) {
             .clickable(onClick = { onCocktailClick(cocktail.id) }),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column {
-            ProportionalImage(
-                imageUrl = cocktail.imageUrl,
-                contentDescription = cocktail.name,
-                modifier = Modifier.height(180.dp)
-            )
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = cocktail.name, style = MaterialTheme.typography.titleMedium)
-
+        if (isLandscape) {
+            // Układ poziomy - obraz z lewej, tekst z prawej
+            Row {
+                ProportionalImage(
+                    imageUrl = cocktail.imageUrl,
+                    contentDescription = cocktail.name,
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(150.dp)
+                )
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .align(Alignment.CenterVertically)
+                ) {
+                    Text(
+                        text = cocktail.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        } else {
+            // Układ pionowy - obraz na górze, tekst na dole
+            Column {
+                ProportionalImage(
+                    imageUrl = cocktail.imageUrl,
+                    contentDescription = cocktail.name,
+                    modifier = Modifier.height(180.dp)
+                )
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = cocktail.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
         }
     }

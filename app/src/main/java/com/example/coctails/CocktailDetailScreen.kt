@@ -112,7 +112,7 @@ fun CocktailDetailScreen(cocktailId: String, onNavigateBack: () -> Unit, timerVi
                     }
                 }
             }
-        } ?: Text("Nie znaleziono koktajlu")
+        } ?: Text("Cannot find Cocktail")
     }
 }
 
@@ -141,7 +141,7 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // SkĹadniki
+        // Składniki
         Text(
             text = "Ingredients:",
             style = MaterialTheme.typography.titleLarge

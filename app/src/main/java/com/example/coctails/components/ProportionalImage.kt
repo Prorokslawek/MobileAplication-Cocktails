@@ -1,7 +1,6 @@
 package com.example.coctails.components
 
-
-
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 
@@ -24,22 +24,32 @@ fun ProportionalImage(
     contentDescription: String?,
     modifier: Modifier = Modifier
 ) {
+    // Wykrywanie orientacji ekranu
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.Black),
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(
             model = imageUrl,
             contentDescription = contentDescription,
-            contentScale = ContentScale.Crop, // Zmiana z Fit na Crop
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 250.dp) // Zmniejszona maksymalna wysokość
-                .aspectRatio(16/9f) // Stały aspect ratio dla wszystkich obrazów
+                // W orientacji poziomej używamy innego współczynnika proporcji
+                .then(
+                    if (isLandscape) {
+                        Modifier.heightIn(max = 200.dp)
+                    } else {
+                        Modifier.aspectRatio(1f)
+                    }
+                )
+                .padding(8.dp)
         )
     }
 }

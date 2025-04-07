@@ -26,27 +26,7 @@ class CocktailRepository {
         return@withContext cocktails
     }
 
-    // Pobierz koktajl po ID
-    suspend fun getCocktailById(id: String): Cocktail? = withContext(Dispatchers.IO) {
-        try {
-            val response = CocktailApi.service.searchCocktails(id)
-            return@withContext response.drinks?.firstOrNull()?.toCocktail()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return@withContext null
-        }
-    }
 
-    // Pobierz losowy koktajl
-    suspend fun getRandomCocktail(): Cocktail? = withContext(Dispatchers.IO) {
-        try {
-            val response = CocktailApi.service.getRandomCocktail()
-            return@withContext response.drinks?.firstOrNull()?.toCocktail()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return@withContext null
-        }
-    }
     //Pobierz koktalje bezalkoholowe
     suspend fun getNonAlcoholicCocktails(): List<Cocktail> {
         val response = CocktailApi.service.filterByAlcoholic("Non_Alcoholic")
@@ -56,8 +36,8 @@ class CocktailRepository {
                 id = it.idDrink ?: "",
                 name = it.strDrink ?: "",
                 imageUrl = it.strDrinkThumb ?: "",
-                ingredients = emptyList(), // Te dane będą pobrane później
-                instructions = "" // Te dane będą pobrane później
+                ingredients = emptyList(),
+                instructions = ""
             )
         } ?: emptyList()
     }
