@@ -42,7 +42,7 @@ import androidx.compose.material3.FloatingActionButton
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
-
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,10 +105,18 @@ fun CocktailDetailScreen(cocktailId: String, onNavigateBack: () -> Unit, timerVi
             ) { paddingValues ->
                 when (windowSizeClass.widthSizeClass) {
                     WindowWidthSizeClass.Compact -> {
-                        CompactCocktailDetail(cocktail, Modifier.padding(paddingValues))
+                        CompactCocktailDetail(
+                            cocktail = cocktail,
+                            modifier = Modifier.padding(paddingValues),
+                            viewModel = viewModel  // Przekaż ViewModel
+                        )
                     }
                     else -> {
-                        MediumLargeCocktailDetail(cocktail, Modifier.padding(paddingValues))
+                        MediumLargeCocktailDetail(
+                            cocktail = cocktail,
+                            modifier = Modifier.padding(paddingValues),
+                            viewModel = viewModel  // Przekaż ViewModel
+                        )
                     }
                 }
             }
@@ -119,7 +127,10 @@ fun CocktailDetailScreen(cocktailId: String, onNavigateBack: () -> Unit, timerVi
 
 
 @Composable
-fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
+fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier,
+                          viewModel: CocktailDetailViewModel) {
+    val viewModel: CocktailDetailViewModel = viewModel()
+    val preparationTimeInfo by viewModel.preparationTimeInfo.collectAsStateWithLifecycle()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -133,11 +144,21 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
         // Nazwa koktajlu
         Text(
             text = cocktail.name,
             style = MaterialTheme.typography.headlineMedium
         )
+
+        // Dodaj informację o czasie przygotowania
+        Text(
+            text = preparationTimeInfo,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 4.dp)
+        )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -165,6 +186,13 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = preparationTimeInfo,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+
         // Instrukcje przygotowania
         Text(
             text = "Preparation method:",
@@ -181,9 +209,11 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(24.dp))
 
         TimerFragment(
+            cocktailName = cocktail.name,
             modifier = Modifier.fillMaxWidth()
                 .fillMaxWidth()
                 .padding(horizontal = 0.dp)
+
         )
 
     }
@@ -191,13 +221,16 @@ fun CompactCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
 
 
 @Composable
-fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier) {
+fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier,
+                              viewModel: CocktailDetailViewModel) {
+    val viewModel: CocktailDetailViewModel = viewModel()
+    val preparationTimeInfo by viewModel.preparationTimeInfo.collectAsStateWithLifecycle()
     Row(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Obraz z lewej strony, ograniczony do 40% szerokoĹci
+        // Obraz z lewej strony, ograniczony do 40% szerokości
         Box(modifier = Modifier.weight(0.4f)) {
             ProportionalImage(
                 imageUrl = cocktail.imageUrl,
@@ -208,7 +241,7 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // SzczegĂłĹy z prawej strony
+        // Szczegóły z prawej strony
         Column(
             modifier = Modifier
                 .weight(0.6f)
@@ -221,7 +254,19 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // SkĹadniki
+
+            // Dodaj informację o czasie przygotowania
+            Text(
+                text = preparationTimeInfo,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Składniki
             Text(
                 text = "Ingredients:",
                 style = MaterialTheme.typography.titleLarge
@@ -261,6 +306,7 @@ fun MediumLargeCocktailDetail(cocktail: Cocktail, modifier: Modifier = Modifier)
             Spacer(modifier = Modifier.height(24.dp))
 
             TimerFragment(
+                cocktailName = cocktail.name,
                 modifier = Modifier.fillMaxWidth()
                     .fillMaxWidth()
                     .padding(horizontal = 0.dp)

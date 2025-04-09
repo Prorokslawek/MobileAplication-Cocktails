@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -23,7 +25,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,14 +49,15 @@ import com.example.coctails.viewmodel.TimerViewModel
 @Composable
 fun TimerFragment(
     modifier: Modifier = Modifier,
-    timerViewModel: TimerViewModel = viewModel()
+    timerViewModel: TimerViewModel = viewModel(),
+    cocktailName: String = ""
 ) {
     val timerState by timerViewModel.timerState.collectAsState()
     val isFullScreen by timerViewModel.isFullScreen.collectAsState()
     var minutesInput by remember { mutableIntStateOf(0) }
     var secondsInput by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
 
-    // Wyświetl dialog pełnoekranowy, jeśli isFullScreen jest true
     if (isFullScreen) {
         Dialog(
             onDismissRequest = { timerViewModel.toggleFullScreen() },
@@ -75,7 +79,11 @@ fun TimerFragment(
                     }
                 },
                 onExitFullScreenClick = { timerViewModel.toggleFullScreen() },
-                isRunning = timerState.isRunning
+                onSaveTimeClick = { timerViewModel.savePreparationTime(cocktailName, context) },
+                isRunning = timerState.isRunning,
+                initialTime = timerViewModel.initialTime,
+                currentSeconds = timerState.currentSeconds,
+                cocktailName = cocktailName
             )
         }
     }
@@ -102,7 +110,6 @@ fun TimerFragment(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Przycisk pełnego ekranu
                 IconButton(
                     onClick = { timerViewModel.toggleFullScreen() }
                 ) {
@@ -116,7 +123,6 @@ fun TimerFragment(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Wyświetlanie czasu
             Text(
                 text = timerState.formattedTime,
                 fontSize = 48.sp,
@@ -128,18 +134,19 @@ fun TimerFragment(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (!timerState.isRunning && timerState.currentSeconds == 0) {
-                // Ustawienia czasu
                 Column {
                     Text(
                         text = "Minutes: $minutesInput",
                         style = MaterialTheme.typography.bodyLarge
                     )
 
-                    Slider(
-                        value = minutesInput.toFloat(),
-                        onValueChange = { minutesInput = it.toInt() },
-                        valueRange = 0f..30f,
-                        steps = 30,
+                    TextField(
+                        value = minutesInput.toString(),
+                        onValueChange = { input ->
+                            minutesInput = input.filter { it.isDigit() }.toIntOrNull() ?: 0
+                        },
+                        label = { Text("minutes") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -150,11 +157,13 @@ fun TimerFragment(
                         style = MaterialTheme.typography.bodyLarge
                     )
 
-                    Slider(
-                        value = secondsInput.toFloat(),
-                        onValueChange = { secondsInput = it.toInt() },
-                        valueRange = 0f..59f,
-                        steps = 59,
+                    TextField(
+                        value = secondsInput.toString(),
+                        onValueChange = { input ->
+                            secondsInput = input.filter { it.isDigit() }.toIntOrNull()?.coerceIn(0, 59) ?: 0
+                        },
+                        label = { Text("Seconds") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -171,7 +180,6 @@ fun TimerFragment(
                     }
                 }
             } else {
-                // Przyciski kontrolne z ikonami
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -241,6 +249,19 @@ fun TimerFragment(
                         )
                     }
                 }
+
+                // Dodaj przycisk zapisu czasu przygotowania poza Row
+                if (timerState.currentSeconds < timerViewModel.initialTime && !timerState.isRunning) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            timerViewModel.savePreparationTime(cocktailName, context)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Zapisz czas przygotowania")
+                    }
+                }
             }
         }
     }
@@ -253,7 +274,11 @@ fun FullScreenTimer(
     onStopClick: () -> Unit,
     onResetClick: () -> Unit,
     onExitFullScreenClick: () -> Unit,
-    isRunning: Boolean
+    onSaveTimeClick: () -> Unit,
+    isRunning: Boolean,
+    initialTime: Int,
+    currentSeconds: Int,
+    cocktailName: String
 ) {
     Box(
         modifier = Modifier
@@ -267,7 +292,6 @@ fun FullScreenTimer(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            // Przycisk wyjścia z pełnego ekranu (w prawym górnym rogu)
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopEnd
@@ -291,7 +315,6 @@ fun FullScreenTimer(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Duży wyświetlacz czasu
             Text(
                 text = timerState.formattedTime,
                 fontSize = 96.sp,
@@ -302,7 +325,6 @@ fun FullScreenTimer(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Przyciski kontrolne
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
@@ -363,6 +385,22 @@ fun FullScreenTimer(
                         contentDescription = "Zeruj",
                         tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            // Dodaj przycisk zapisu czasu przygotowania w trybie pełnoekranowym
+            if (currentSeconds < initialTime && !isRunning && cocktailName.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = onSaveTimeClick,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(56.dp)
+                ) {
+                    Text(
+                        "Zapisz czas przygotowania",
+                        fontSize = 18.sp
                     )
                 }
             }
