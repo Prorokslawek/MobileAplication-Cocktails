@@ -259,7 +259,7 @@ fun TimerFragment(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Zapisz czas przygotowania")
+                        Text("Save preparation time")
                     }
                 }
             }
